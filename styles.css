@@ -1,0 +1,76 @@
+/*
+ * Renders a factor-label dimensional-analysis expression: a given
+ * quantity followed by a horizontal train of multiplied fractions,
+ * joined by "×" signs, with a diagonal strike through any unit that
+ * cancels.
+ *
+ * The whole block carries role="img" plus an aria-label with a linear
+ * reading of the source, and this visual scaffold is aria-hidden, so a
+ * screen reader gets the sentence and never the pile of struck cells.
+ */
+.filter-dimanalysis {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 0.15em;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.filter-dimanalysis-track {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.95em;
+    line-height: 1.15;
+}
+
+/*
+ * Deliberately NOT display:flex - the track already centres these
+ * vertically, and making them flex containers would split "1.00" and its
+ * unit into separate flex items, whose separating whitespace flexbox
+ * then discards ("1.00 g" -> "1.00g").
+ */
+.filter-dimanalysis-given,
+.filter-dimanalysis-result {
+    white-space: nowrap;
+}
+
+.filter-dimanalysis-op {
+    display: flex;
+    align-items: center;
+    padding: 0 0.4em;
+}
+
+.filter-dimanalysis-factor {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.filter-dimanalysis-num,
+.filter-dimanalysis-den {
+    display: block;
+    padding: 0.15em 0.35em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.filter-dimanalysis-den {
+    border-top: 1px solid currentColor;
+}
+
+.filter-dimanalysis-cancel {
+    position: relative;
+    white-space: nowrap;
+}
+
+.filter-dimanalysis-cancel::after {
+    content: "";
+    position: absolute;
+    left: -0.1em;
+    right: -0.1em;
+    top: 50%;
+    border-top: 1px solid currentColor;
+    transform: rotate(-10deg);
+    pointer-events: none;
+}
