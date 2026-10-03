@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2026083103;          // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2026041000;           // Requires this Moodle version.
-$plugin->supported = [502, 502];           // Supported Moodle branch range.
+$plugin->supported = [502, 503];           // Supported Moodle branch range.
 $plugin->component = 'filter_dimanalysis'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity  = MATURITY_STABLE;
