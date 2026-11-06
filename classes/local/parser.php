@@ -43,7 +43,8 @@ namespace filter_dimanalysis\local;
  * caller leaves the text untouched.
  *
  * Detection limits (documented, deliberate): parentheses may nest one
- * level deep; a bare quantity may not contain the ASCII letter "x"; the
+ * level deep; a bare quantity may not contain a lone ASCII "x"/"X" (an
+ * element symbol such as Xe and formula groups such as Ba(OH)2 are fine); the
  * whole expression must sit within a single text node (do not split
  * factors across editor line breaks).
  *
@@ -60,6 +61,15 @@ class parser {
      * of everything a bare quantity run may NOT contain.
      */
     private const NOT_BARE = '[^()=\/xX×*·⋅∙]';
+
+    /**
+     * @var string One "unit" of a bare quantity run during auto-detection:
+     * any NOT_BARE character, an "X" that starts an element symbol (Xe -
+     * a lone X/x is still a separator), or a parenthesised formula group
+     * such as "(OH)2" or "(SO4)3" (capital letter first, no spaces, no
+     * slash - so a conversion factor can never match it).
+     */
+    private const BARE = '(?:' . self::NOT_BARE . '|X(?=[a-z])|\((?:[A-Z][a-z]?\d*)+\)\d*)';
 
     /**
      * @var string[] Units recognised when splitting a run with no space
@@ -561,13 +571,13 @@ class parser {
         if ($before === '') {
             return null;
         }
-        if ($before[strlen($before) - 1] === ')') {
+        if ($before[strlen($before) - 1] === ')' && !preg_match('/\d' . self::BARE . '*\((?:[A-Z][a-z]?\d*)+\)$/u', $before)) {
             return self::match_open_paren($before);
         }
         // A bare term drawn in by expansion must be a real quantity: it
         // starts with a (optionally signed) number, so sentence text like
         // "At STP: " in front of it is left alone.
-        if (preg_match('/([+-]?\d' . self::NOT_BARE . '*)$/u', $before, $bm)) {
+        if (preg_match('/([+-]?\d' . self::BARE . '*)$/u', $before, $bm)) {
             if (rtrim($bm[1]) === '') {
                 return null;
             }
@@ -610,7 +620,7 @@ class parser {
             return $rel === null ? null : $end + $offset + $lead + $rel + 1;
         }
         // As on the left: only a number-led bare quantity extends the span.
-        if (preg_match('/^([+-]?\d' . self::NOT_BARE . '*)/u', $rest, $bm)) {
+        if (preg_match('/^([+-]?\d' . self::BARE . '*)/u', $rest, $bm)) {
             $run = rtrim($bm[1]);
             if ($run === '') {
                 return null;
