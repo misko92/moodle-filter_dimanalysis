@@ -157,4 +157,42 @@ final class parser_test extends \advanced_testcase {
     public function test_find_all_ignores_plain_fractions(): void {
         $this->assertSame([], parser::find_all('Mix in a 3/4 to 1/2 ratio, see note (p. 3).'));
     }
+
+    public function test_find_all_given_label_may_start_with_x(): void {
+        // A label of Xe used to stop detection because X doubles as a separator.
+        $text = 'So 14.1 mol Xe × (6.022E23 atoms / 1 mol) = 8.49E24 atoms';
+        $matches = parser::find_all($text);
+
+        $this->assertCount(1, $matches);
+        $this->assertSame(
+            '14.1 mol Xe × (6.022E23 atoms / 1 mol) = 8.49E24 atoms',
+            substr($text, $matches[0]['offset'], $matches[0]['length'])
+        );
+        $this->assertSame('Xe', $matches[0]['tree']['given']['label']);
+    }
+
+    public function test_find_all_given_label_may_contain_a_formula_group(): void {
+        // A given of Ba(OH)2 used to be cut at the bracket, leaving 2 as the given.
+        $text = 'Ratio: 0.931 mol Ba(OH)2 × (2 mol H2O / 1 mol Ba(OH)2) = 1.86 mol H2O';
+        $matches = parser::find_all($text);
+
+        $this->assertCount(1, $matches);
+        $this->assertSame(
+            ['value' => '0.931', 'unit' => 'mol', 'label' => 'Ba(OH)2', 'cancel' => true],
+            $matches[0]['tree']['given']
+        );
+        $text2 = 'Use 2.50 g Al2(SO4)3 x (1 mol / 342.17 g) here.';
+        $m2 = parser::find_all($text2);
+        $this->assertCount(1, $m2);
+        $this->assertSame('Al2(SO4)3', $m2[0]['tree']['given']['label']);
+    }
+
+    public function test_find_all_lone_x_is_still_a_separator(): void {
+        $text = 'Then 5 L X (1 mol / 22.4 L) x (46 g / 1 mol).';
+        $matches = parser::find_all($text);
+
+        $this->assertCount(1, $matches);
+        $this->assertSame('5', $matches[0]['tree']['given']['value']);
+        $this->assertCount(2, $matches[0]['tree']['factors']);
+    }
 }
